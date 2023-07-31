@@ -1,0 +1,47 @@
+service: remak-scrap
+frameworkVersion: '3'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ap-northeast-2
+  timeout: 600
+  memorySize: 2048
+  environment:
+    NODE_ENV: 'production'
+    DB_URL: ${env:DB_URL}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "s3:*"
+        - "ec2:CreateNetworkInterface"
+        - "ec2:DescribeNetworkInterfaces"
+        - "ec2:DeleteNetworkInterface"
+      Resource: "*"
+  logRetentionInDays: 14
+
+functions:
+  remak-scraping:
+    handler: src/handler.handler
+
+constructs:
+  remak-scraping-queue:
+    type: queue
+    worker:
+      handler: src/handler.handler
+      maxConcurrency: 50
+      timeout: 600
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-lift
+  - serverless-plugin-typescript
+  - serverless-prune-plugin
+
+custom:
+  prune:
+    automatic: true
+    number: 3
