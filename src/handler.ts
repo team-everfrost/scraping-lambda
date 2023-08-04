@@ -15,7 +15,7 @@ export const handler = async (event) => {
   for (const record of event.Records) {
     // 파싱이 필요할때만 JSON.parse
     let messageBody = record.body;
-    if (typeof record.body === 'string') messageBody = JSON.parse(record.body);
+    if (typeof messageBody === 'string') messageBody = JSON.parse(messageBody);
     const documentId = messageBody.documentId;
 
     // DB에서 Docid를 통해 가져오기
