@@ -9,10 +9,10 @@ export const client = new ServerlessClient({
 });
 
 export const enum Status {
-  SCRAP_PENDING = 'SCRAP_PENDING',
-  SCRAP_PROCESSING = 'SCRAP_PROCESSING',
-  SCRAP_REJECTED = 'SCRAP_REJECTED',
-  COMPLETED = 'COMPLETED',
+  SCRAPE_PENDING = 'SCRAPE_PENDING',
+  SCRAPE_PROCESSING = 'SCRAPE_PROCESSING',
+  SCRAPE_REJECTED = 'SCRAPE_REJECTED',
+  EMBED_PENDING = 'EMBED_PENDING',
 }
 
 export const findDoc = async (documentId: number) => {
@@ -28,4 +28,15 @@ export const changeDocStatus = async (documentId: number, status: Status) => {
     status,
     documentId,
   ]);
+};
+
+export const updateContent = async (
+  documentId: number,
+  title: string,
+  content: string,
+) => {
+  await client.query(
+    'UPDATE document SET title = $1, content = $2 WHERE id = $3',
+    [title, content, documentId],
+  );
 };

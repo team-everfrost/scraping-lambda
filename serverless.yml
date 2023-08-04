@@ -13,6 +13,7 @@ provider:
   environment:
     NODE_ENV: 'production'
     DB_URL: ${env:DB_URL}
+    SQS_URL: ${env:SQS_URL}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -20,6 +21,9 @@ provider:
         - "ec2:CreateNetworkInterface"
         - "ec2:DescribeNetworkInterfaces"
         - "ec2:DeleteNetworkInterface"
+        - "sqs:SendMessage"
+        - "sqs:GetQueueUrl"
+        - "sqs:ListQueues"
       Resource: "*"
   logRetentionInDays: 14
 
