@@ -7,6 +7,7 @@ import {
   updateContent,
 } from './lib/db';
 import { enqueue } from './lib/sqs';
+import { postprocess } from './scrap/postprocess';
 import { preprocess } from './scrap/preprocess';
 
 export const handler = async (event) => {
@@ -36,11 +37,17 @@ export const handler = async (event) => {
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
 
     try {
+      // 전처리
       const { url, policy } = await preprocess(doc.url);
-      console.log(url, policy);
+
+      // 스크랩
       let article: ArticleData;
       if (policy === 'article-extractor') article = await extract(url);
       else throw new Error('Not supported policy');
+
+      // 후처리
+      article = await postprocess(article);
+
       // DB 저장
       await updateContent(documentId, article.title, article.content);
       // SQS에 임베딩 요청
