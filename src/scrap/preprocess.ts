@@ -10,7 +10,7 @@ const urlPolicy = [
 export const preprocess = async (url: string) => {
   // url 정책에 따라서 url 변경
   const policy = urlPolicy.find((policy) => url.includes(policy.origin));
-  if (policy?.find && policy?.replace) {
+  if (policy?.find && policy?.replace && !url.includes(policy.replace)) {
     url = url.replace(policy.find, policy.replace);
   }
   return {
