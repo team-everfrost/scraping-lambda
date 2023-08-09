@@ -14,7 +14,8 @@ export const handler = async (event) => {
   await client.connect();
 
   for (const record of event.Records) {
-    const messageBody = JSON.parse(record.body);
+    const messageBody =
+      typeof record.body === 'string' ? JSON.parse(record.body) : record.body;
     const documentId = messageBody.documentId;
 
     // DB에서 Docid를 통해 가져오기
@@ -42,7 +43,12 @@ export const handler = async (event) => {
       article = await postprocess(article);
 
       // DB 저장
-      await updateContent(documentId, article.title, article.content);
+      await updateContent(
+        documentId,
+        article.title,
+        article.image,
+        article.content,
+      );
       // SQS에 임베딩 요청
       await enqueue(documentId);
     } catch (e) {

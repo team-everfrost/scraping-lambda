@@ -33,10 +33,11 @@ export const changeDocStatus = async (documentId: number, status: Status) => {
 export const updateContent = async (
   documentId: number,
   title: string,
+  thumbnail_url: string,
   content: string,
 ) => {
   await client.query(
-    'UPDATE document SET title = $1, content = $2 WHERE id = $3',
-    [title, content, documentId],
+    'UPDATE document SET title = $1, thumbnail_url = $2, content = $3 WHERE id = $4',
+    [title, thumbnail_url, content, documentId],
   );
 };
