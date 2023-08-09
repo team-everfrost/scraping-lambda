@@ -1,4 +1,4 @@
-import { ArticleData, extract } from '@extractus/article-extractor';
+import { ArticleData } from '@extractus/article-extractor';
 import {
   Status,
   changeDocStatus,
@@ -7,6 +7,7 @@ import {
   updateContent,
 } from './lib/db';
 import { enqueue } from './lib/sqs';
+import { extractUrl } from './scrap/extract';
 import { postprocess } from './scrap/postprocess';
 import { preprocess } from './scrap/preprocess';
 
@@ -36,7 +37,7 @@ export const handler = async (event) => {
 
       // 스크랩
       let article: ArticleData;
-      if (policy === 'article-extractor') article = await extract(url);
+      if (policy === 'axios') article = await extractUrl(url);
       else throw new Error('Not supported policy');
 
       // 후처리

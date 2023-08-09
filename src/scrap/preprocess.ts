@@ -3,7 +3,7 @@ const urlPolicy = [
     origin: 'blog.naver.com',
     find: 'blog.naver.com',
     replace: 'm.blog.naver.com',
-    policy: 'article-extractor', // article-extractor, puppeteer
+    policy: 'axios', // axios, puppeteer
   },
 ];
 
@@ -15,6 +15,6 @@ export const preprocess = async (url: string) => {
   }
   return {
     url,
-    policy: policy?.policy || 'article-extractor',
+    policy: policy?.policy || 'axios',
   };
 };
