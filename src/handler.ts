@@ -1,4 +1,3 @@
-import { ArticleData } from '@extractus/article-extractor';
 import {
   Status,
   changeDocStatus,
@@ -9,7 +8,6 @@ import {
 import { enqueue } from './lib/sqs';
 import { extractUrl } from './scrap/extract';
 import { postprocess } from './scrap/postprocess';
-import { preprocess } from './scrap/preprocess';
 
 export const handler = async (event) => {
   await client.connect();
@@ -32,16 +30,11 @@ export const handler = async (event) => {
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
 
     try {
-      // 전처리
-      const { url, policy } = await preprocess(doc.url);
-
       // 스크랩
-      let article: ArticleData;
-      if (policy === 'axios') article = await extractUrl(url);
-      else throw new Error('Not supported policy');
+      let article = await extractUrl(doc.url, doc.doc_id);
 
       // 후처리
-      article = await postprocess(article);
+      article = await postprocess(article, doc.doc_id);
 
       // DB 저장
       await updateContent(

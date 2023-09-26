@@ -26,6 +26,8 @@ provider:
         - "sqs:ListQueues"
       Resource: "*"
   logRetentionInDays: 14
+  layers:
+    - arn:aws:lambda:ap-northeast-2:518272060765:layer:chromium:3
 
 functions:
   remak-scraping:

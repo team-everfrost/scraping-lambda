@@ -17,7 +17,7 @@ export const enum Status {
 
 export const findDoc = async (documentId: number) => {
   const queryResult = await client.query(
-    'SELECT title, type, url, content, status, user_id FROM document WHERE id = $1',
+    'SELECT title, type, url, content, status, doc_id, user_id FROM document WHERE id = $1',
     [documentId],
   );
   return queryResult.rows[0];
