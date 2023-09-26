@@ -71,7 +71,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
     '..',
     '..',
     'node_modules',
-    '.bin',
+    'single-file-cli',
     'single-file',
   );
 
