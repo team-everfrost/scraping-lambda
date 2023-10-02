@@ -1,3 +1,4 @@
+import fs from 'fs';
 import {
   Status,
   changeDocStatus,
@@ -52,6 +53,11 @@ export const handler = async (event) => {
 
     // DB에 상태 저장
     await changeDocStatus(documentId, Status.EMBED_PENDING);
+  }
+
+  // scrap.html 파일 삭제
+  if (fs.existsSync('scrap.html')) {
+    fs.unlinkSync('scrap.html');
   }
 
   await client.clean();

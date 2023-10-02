@@ -83,14 +83,16 @@ export const extractUrl = async (url: string, doc_id: string) => {
     chromiumPath = await chromium.executablePath();
   }
 
+  console.log('chromiumPath:', chromiumPath);
+
   await exec(
     `${binaryPath} "${url}" --output scrap.html ` +
       `--filename-conflict-action=overwrite ` +
       // `--browser-width=1920 --browser-height=1080 ` +
-      // `--browser-args="${chromium.args}" ` +
+      // `--browser-args='${JSON.stringify(chromium.args)}' ` +
       `--browser-executable-path="${chromiumPath}" ` +
       `--http-header="Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7" ` +
-      `--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"`,
+      `--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"`,
   );
 
   // TODO: HTML 파일을 S3에 업로드합니다.
@@ -103,9 +105,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
   // TODO: html 프리프로세싱, 포스트프로세싱
   //extractor에 transtormation 함수 주입 부분
 
-  const article = await extractFromHtml(html, url, {
-    contentLengthThreshold: 0,
-  });
+  const article = await extractFromHtml(html, url);
 
   // 본문에 있는 remak URL만 추출. 예: https://image.remak.io/xxxx/xxxx.xxx
   const urlPattern = /https:\/\/image\.remak\.io\/[\w-]+\/[\w-]+\.\w+/g;

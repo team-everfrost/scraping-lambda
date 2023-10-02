@@ -22,7 +22,7 @@
     "single-file-cli": "^1.0.68"
   },
   "devDependencies": {
-    "@sparticuz/chromium": "^114.0.0",
+    "@sparticuz/chromium": "^117.0.0",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
     "@typescript-eslint/parser": "^6.2.0",
     "commitlint-config-git-commit-emoji": "^1.0.0",
