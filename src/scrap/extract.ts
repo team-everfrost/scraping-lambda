@@ -1,13 +1,9 @@
 import { extractFromHtml } from '@extractus/article-extractor';
 import chromium from '@sparticuz/chromium';
-import { exec as execCb } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
-import path from 'path';
-import { promisify } from 'util';
+import * as api from 'single-file-cli';
 import { deleteAllImagesForDocument, uploadAllImages } from '../lib/s3';
-
-const exec = promisify(execCb);
 
 interface ImageMap {
   [key: string]: string;
@@ -66,15 +62,6 @@ const getExtensionFromBase64Format = (format: string): string | null => {
 };
 
 export const extractUrl = async (url: string, doc_id: string) => {
-  const binaryPath = path.join(
-    __dirname,
-    '..',
-    '..',
-    'node_modules',
-    'single-file-cli',
-    'single-file',
-  );
-
   let chromiumPath = '';
   if (process.platform === 'darwin') {
     // 맥에선 안되서 brew install chromium --no-quarantine으로 설치
@@ -83,17 +70,104 @@ export const extractUrl = async (url: string, doc_id: string) => {
     chromiumPath = await chromium.executablePath();
   }
 
-  console.log('chromiumPath:', chromiumPath);
+  const args = {
+    browserExecutablePath: chromiumPath,
+    userAgent:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+    filenameConflictAction: 'overwrite',
+    acceptHeaders: {
+      font: 'application/font-woff2;q=1.0,application/font-woff;q=0.9,*/*;q=0.8',
+      image: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      stylesheet: 'text/css,*/*;q=0.1',
+      script: '*/*',
+      document:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    },
+    backEnd: 'puppeteer',
+    blockMixedContent: false,
+    browserServer: '',
+    browserHeadless: true,
+    browserWidth: 1280,
+    browserHeight: 720,
+    browserLoadMaxTime: 60000,
+    browserWaitDelay: 0,
+    browserWaitUntil: 'networkidle0',
+    browserWaitUntilFallback: true,
+    browserDebug: false,
+    browserArgs: '',
+    browserStartMinimized: false,
+    browserCookiesFile: '',
+    browserIgnoreInsecureCerts: false,
+    browserFreezePrototypes: false,
+    dumpContent: false,
+    filenameTemplate: '{page-title} ({date-iso} {time-locale}).html',
+    filenameReplacementCharacter: '_',
+    filenameMaxLength: 192,
+    filenameMaxLengthUnit: 'bytes',
+    replaceEmojisInFilename: false,
+    groupDuplicateImages: true,
+    maxSizeDuplicateImages: 524288,
+    httpProxyServer: '',
+    httpProxyUsername: '',
+    httpProxyPassword: '',
+    includeInfobar: false,
+    insertMetaCsp: true,
+    loadDeferredImages: true,
+    loadDeferredImagesDispatchScrollEvent: false,
+    loadDeferredImagesMaxIdleTime: 1500,
+    loadDeferredImagesKeepZoomLevel: false,
+    loadDeferredImagesBeforeFrames: false,
+    maxParallelWorkers: 8,
+    maxResourceSizeEnabled: false,
+    maxResourceSize: 10,
+    moveStylesInHead: false,
+    outputDirectory: '',
+    removeHiddenElements: true,
+    removeUnusedStyles: true,
+    removeUnusedFonts: true,
+    removeSavedDate: false,
+    removeFrames: false,
+    blockScripts: true,
+    blockAudios: true,
+    blockVideos: true,
+    removeAlternativeFonts: true,
+    removeAlternativeMedias: true,
+    removeAlternativeImages: true,
+    saveOriginalUrls: false,
+    saveRawPage: false,
+    webDriverExecutablePath: '',
+    userScriptEnabled: true,
+    crawlLinks: false,
+    crawlInnerLinksOnly: true,
+    crawlRemoveUrlFragment: true,
+    crawlMaxDepth: 1,
+    crawlExternalLinksMaxDepth: 1,
+    crawlReplaceUrls: false,
+    url,
+    output: 'scrap.html',
+    backgroundSave: true,
+    crawlReplaceURLs: false,
+    crawlRemoveURLFragment: true,
+    insertMetaCSP: true,
+    saveOriginalURLs: false,
+    httpHeaders: {
+      'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+    },
+    browserCookies: [],
+    browserScripts: [],
+    browserStylesheets: [],
+    crawlRewriteRules: [],
+    emulateMediaFeatures: [],
+    retrieveLinks: true,
 
-  await exec(
-    `${binaryPath} "${url}" --output scrap.html ` +
-      `--filename-conflict-action=overwrite ` +
-      // `--browser-width=1920 --browser-height=1080 ` +
-      // `--browser-args='${JSON.stringify(chromium.args)}' ` +
-      `--browser-executable-path="${chromiumPath}" ` +
-      `--http-header="Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7" ` +
-      `--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"`,
-  );
+    compressHTML: false,
+  };
+
+  const scrapUrls = [url];
+
+  const singlefile = await api.initialize(args);
+  await singlefile.capture(scrapUrls);
+  await singlefile.finish();
 
   // TODO: HTML 파일을 S3에 업로드합니다.
 
@@ -105,15 +179,17 @@ export const extractUrl = async (url: string, doc_id: string) => {
   // TODO: html 프리프로세싱, 포스트프로세싱
   //extractor에 transtormation 함수 주입 부분
 
-  const article = await extractFromHtml(html, url);
+  const article = await extractFromHtml(html, url, {
+    contentLengthThreshold: 0,
+  });
 
   // 본문에 있는 remak URL만 추출. 예: https://image.remak.io/xxxx/xxxx.xxx
   const urlPattern = /https:\/\/image\.remak\.io\/[\w-]+\/[\w-]+\.\w+/g;
-  const urls = article.content.match(urlPattern);
+  const remakUrls = article.content.match(urlPattern);
 
   // 추출된 URL만 포함된 ImageMap을 생성합니다.
-  const filteredImageMap = urls
-    ? urls.reduce((acc: ImageMap, url: string) => {
+  const filteredImageMap = remakUrls
+    ? remakUrls.reduce((acc: ImageMap, url: string) => {
         if (imageMap[url]) {
           acc[url] = imageMap[url];
         }
