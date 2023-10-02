@@ -62,16 +62,19 @@ const getExtensionFromBase64Format = (format: string): string | null => {
 };
 
 export const extractUrl = async (url: string, doc_id: string) => {
-  let chromiumPath = '';
+  let browserExecutablePath = '',
+    browserArgs = '';
   if (process.platform === 'darwin') {
     // 맥에선 안되서 brew install chromium --no-quarantine으로 설치
-    chromiumPath = '/Applications/Chromium.app/Contents/MacOS/Chromium';
+    browserExecutablePath =
+      '/Applications/Chromium.app/Contents/MacOS/Chromium';
   } else {
-    chromiumPath = await chromium.executablePath();
+    browserExecutablePath = await chromium.executablePath();
+    browserArgs = '--no-sandbox --disable-setuid-sandbox';
   }
 
   const args = {
-    browserExecutablePath: chromiumPath,
+    browserExecutablePath,
     userAgent:
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
     filenameConflictAction: 'overwrite',
@@ -94,7 +97,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
     browserWaitUntil: 'networkidle0',
     browserWaitUntilFallback: true,
     browserDebug: false,
-    browserArgs: '',
+    browserArgs,
     browserStartMinimized: false,
     browserCookiesFile: '',
     browserIgnoreInsecureCerts: false,
