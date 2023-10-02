@@ -70,7 +70,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
       '/Applications/Chromium.app/Contents/MacOS/Chromium';
   } else {
     browserExecutablePath = await chromium.executablePath();
-    browserArgs = '--no-sandbox --disable-setuid-sandbox';
+    browserArgs = JSON.stringify(['--no-sandbox', '--disable-setuid-sandbox']);
   }
 
   const args = {
