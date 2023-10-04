@@ -66,7 +66,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
     output = 'scrap.html',
     browserArgs = '';
   if (process.platform === 'darwin') {
-    // 맥에선 안되서 brew install chromium --no-quarantine으로 설치
+    // 맥에선 안돼서 brew install chromium --no-quarantine으로 설치
     browserExecutablePath =
       '/Applications/Chromium.app/Contents/MacOS/Chromium';
   } else {

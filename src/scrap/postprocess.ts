@@ -15,14 +15,10 @@ export const postprocess = async (article: ArticleData, docId: string) => {
   const result = article;
 
   //TODO 썸네일 URL 교체 -> postprocess에서?
-  const thumbnailExtension = article.image.split('.').pop() || '';
-  await thumbnailToS3(
-    article.image,
-    docId + (thumbnailExtension ? `.${thumbnailExtension}` : ''),
-  );
-  article.image =
-    `https://thumbnail.remak.io/${docId}` +
-    (thumbnailExtension ? `.${thumbnailExtension}` : '');
+  //썸네일 파일 확장자 추출에 문제 있어 비활성화
+
+  await thumbnailToS3(article.image, docId);
+  article.image = `https://thumbnail.remak.io/${docId}`;
 
   return result;
 };
