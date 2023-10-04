@@ -71,7 +71,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
       '/Applications/Chromium.app/Contents/MacOS/Chromium';
   } else {
     browserExecutablePath = await chromium.executablePath();
-    output = '/tmp/scrap.html';
+    output = '/tmp/doc_id-scrap.html';
     browserArgs = JSON.stringify([
       '--disable-domain-reliability',
       '--disable-print-preview',
