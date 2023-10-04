@@ -63,6 +63,7 @@ const getExtensionFromBase64Format = (format: string): string | null => {
 
 export const extractUrl = async (url: string, doc_id: string) => {
   let browserExecutablePath = '',
+    output = 'scrap.html',
     browserArgs = '';
   if (process.platform === 'darwin') {
     // 맥에선 안되서 brew install chromium --no-quarantine으로 설치
@@ -70,7 +71,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
       '/Applications/Chromium.app/Contents/MacOS/Chromium';
   } else {
     browserExecutablePath = await chromium.executablePath();
-    // TODO: 브라우저 옵션 더 바꿔보기, 크로미움 람다 참조해서
+    output = '/tmp/scrap.html';
     browserArgs = JSON.stringify([
       '--disable-domain-reliability',
       '--disable-print-preview',
@@ -168,7 +169,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
     crawlExternalLinksMaxDepth: 1,
     crawlReplaceUrls: false,
     url,
-    output: 'scrap.html',
+    output,
     backgroundSave: true,
     crawlReplaceURLs: false,
     crawlRemoveURLFragment: true,
@@ -196,7 +197,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
   // TODO: HTML 파일을 S3에 업로드합니다.
 
   const { imageMap, updatedHTMLContent: html } = extractBase64FromHTML(
-    'scrap.html',
+    output,
     doc_id,
   );
 
