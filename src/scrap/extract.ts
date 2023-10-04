@@ -70,7 +70,28 @@ export const extractUrl = async (url: string, doc_id: string) => {
       '/Applications/Chromium.app/Contents/MacOS/Chromium';
   } else {
     browserExecutablePath = await chromium.executablePath();
-    browserArgs = JSON.stringify(['--no-sandbox', '--disable-setuid-sandbox']);
+    // TODO: 브라우저 옵션 더 바꿔보기, 크로미움 람다 참조해서
+    browserArgs = JSON.stringify([
+      '--disable-domain-reliability',
+      '--disable-print-preview',
+      '--disable-speech-api',
+      '--disk-cache-size=33554432',
+      '--mute-audio',
+      '--no-default-browser-check',
+      // '--no-pings', //single-file-cli에서 기본으로 포함됨
+      '--single-process',
+
+      '--hide-scrollbars',
+      '--ignore-gpu-blocklist',
+      '--in-process-gpu',
+
+      '--allow-running-insecure-content',
+      '--disable-setuid-sandbox',
+      '--disable-site-isolation-trials',
+      '--disable-web-security',
+      '--no-sandbox',
+      '--no-zygote',
+    ]);
   }
 
   const args = {
@@ -90,8 +111,8 @@ export const extractUrl = async (url: string, doc_id: string) => {
     blockMixedContent: false,
     browserServer: '',
     browserHeadless: true,
-    browserWidth: 1280,
-    browserHeight: 720,
+    browserWidth: 1920,
+    browserHeight: 1080,
     browserLoadMaxTime: 60000,
     browserWaitDelay: 0,
     browserWaitUntil: 'networkidle0',
