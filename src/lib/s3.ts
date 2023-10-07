@@ -16,11 +16,13 @@ const uploadToS3 = async (
   s3Key: string,
   bucketName: string = 'remak-image',
 ) => {
-  const [meta, content] = base64Image.split(',');
-  const formatMatch = meta.match(/data:image\/(\w+);base64/);
-  const contentType = formatMatch ? `image/${formatMatch[1]}` : 'image/jpeg';
-
+  const [, content] = base64Image.split(',');
   const buffer = Buffer.from(content, 'base64');
+
+  const fileType = await import('file-type');
+  const result = await fileType.fileTypeFromBuffer(buffer);
+
+  const contentType = result?.mime ?? 'image/jpeg';
 
   const params = {
     Bucket: bucketName,
@@ -66,7 +68,7 @@ export const deleteAllImagesForDocument = async (documentUUID: string) => {
 
   const listResponse = await s3Client.send(listCommand);
   if (!listResponse.Contents) {
-    console.log('No images found for this document.');
+    console.log('No images to delete.');
     return;
   }
 
@@ -79,7 +81,7 @@ export const deleteAllImagesForDocument = async (documentUUID: string) => {
   };
 
   await s3Client.send(new DeleteObjectsCommand(deleteParams));
-  console.log('All images for the document have been deleted.');
+  console.log('Deleted all images.');
 };
 
 export const uploadThumbnailToS3 = async (

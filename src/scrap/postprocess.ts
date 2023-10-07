@@ -2,14 +2,6 @@ import { ArticleData } from '@extractus/article-extractor';
 import { fetchWithRetry } from '../lib/axios';
 import { uploadThumbnailToS3 } from '../lib/s3';
 
-const urlPolicy = [
-  // {
-  //   origin: 'blog.naver.com',
-  //   find: 'type=w80_blur',
-  //   replace: 'type=w800',
-  // },
-];
-
 export const postprocess = async (article: ArticleData, docId: string) => {
   // 수정된 article
   const result = article;

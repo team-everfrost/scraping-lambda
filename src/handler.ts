@@ -18,6 +18,8 @@ export const handler = async (event) => {
       typeof record.body === 'string' ? JSON.parse(record.body) : record.body;
     const documentId = messageBody.documentId;
 
+    console.log('DocumentId:', documentId);
+
     // DB에서 Docid를 통해 가져오기
     const doc = await findDoc(documentId);
     // 중복 처리 방지
@@ -27,11 +29,14 @@ export const handler = async (event) => {
     )
       continue;
 
+    console.log('Before Status:', doc?.status);
+
     // 해당 Doc의 상태를 처리중으로 변경
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
 
     try {
       // 스크랩
+      console.log('Scraping:', doc.url);
       let article = await extractUrl(doc.url, doc.doc_id);
 
       // 후처리
