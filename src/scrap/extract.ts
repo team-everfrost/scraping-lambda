@@ -110,7 +110,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
   const remakUrls = article.content.match(urlPattern);
 
   // 추출된 URL만 포함된 ImageMap을 생성합니다.
-  const filteredImageMap = remakUrls
+  const filteredImageMap: ImageMap = remakUrls
     ? remakUrls.reduce((acc: ImageMap, url: string) => {
         if (imageMap[url]) {
           acc[url] = imageMap[url];
@@ -132,5 +132,13 @@ export const extractUrl = async (url: string, doc_id: string) => {
   //이미지를 S3에 업로드합니다
   await uploadAllImages(filteredImageMap);
 
-  return article;
+  // filteredImageMap의 모든 value(base64)를 바탕으로 파일 크기를 계산합니다.
+  const totalSize = BigInt(
+    Object.values(filteredImageMap)
+      .reduce((acc, base64) => acc + base64.length * 0.75, 0)
+      .toFixed(0),
+  );
+  console.log('Total size:', totalSize);
+
+  return { article, totalSize };
 };

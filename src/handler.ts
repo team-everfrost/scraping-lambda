@@ -36,7 +36,7 @@ export const handler = async (event) => {
     try {
       // 스크랩
       console.log('Scraping:', doc.url);
-      let article = await extractUrl(doc.url, doc.doc_id);
+      let { article, totalSize } = await extractUrl(doc.url, doc.doc_id);
 
       // 후처리
       article = await postprocess(article, doc.doc_id);
@@ -45,8 +45,9 @@ export const handler = async (event) => {
       await updateContent(
         documentId,
         article.title,
-        article.image,
+        article.image, // thumbnail_url
         article.content,
+        totalSize, // file_size
       );
       // SQS에 임베딩 요청
       await enqueue(documentId);

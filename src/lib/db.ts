@@ -35,9 +35,10 @@ export const updateContent = async (
   title: string,
   thumbnail_url: string,
   content: string,
+  totalSize: bigint,
 ) => {
   await client.query(
-    'UPDATE document SET title = $1, thumbnail_url = $2, content = $3 WHERE id = $4',
-    [title, thumbnail_url, content, documentId],
+    'UPDATE document SET title = $1, thumbnail_url = $2, content = $3, file_size = $4 WHERE id = $5',
+    [title, thumbnail_url, content, totalSize, documentId],
   );
 };
