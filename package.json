@@ -20,6 +20,7 @@
     "iconv-lite": "^0.6.3",
     "jschardet": "^3.0.0",
     "serverless-postgres": "^2.1.0",
+    "sharp": "^0.32.6",
     "single-file-cli": "^1.0.68"
   },
   "devDependencies": {
