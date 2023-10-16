@@ -1,6 +1,7 @@
 import {
   addTransformations,
   extractFromHtml,
+  setSanitizeHtmlOptions,
 } from '@extractus/article-extractor';
 import chromium from '@sparticuz/chromium';
 import crypto from 'crypto';
@@ -96,6 +97,13 @@ export const extractUrl = async (url: string, doc_id: string) => {
     output,
     doc_id,
   );
+
+  //code lang 살려놓도록 설정
+  setSanitizeHtmlOptions({
+    allowedClasses: {
+      code: ['language-*', 'lang-*'],
+    },
+  });
 
   //transformtation
   addTransformations(await loadTransformations());
