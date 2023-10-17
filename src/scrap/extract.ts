@@ -25,7 +25,7 @@ export const extractBase64FromHTML = async (
 
   // base64 이미지 패턴을 찾습니다.
   const base64Pattern =
-    /data:(image\/\w+|application\/octet-stream);base64,([a-zA-Z0-9+/=]+)/g;
+    /data:(image\/\w+|(application|binary)\/octet-stream);base64,([a-zA-Z0-9+/=]+)/g;
 
   let match;
   let updatedHTMLContent = htmlContent;
