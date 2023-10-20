@@ -33,6 +33,12 @@ export const handler = async (event) => {
     // 해당 Doc의 상태를 처리중으로 변경
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
 
+    // 실행시간 210초 후 실패처리후 throw
+    setTimeout(async () => {
+      await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
+      throw new Error('Timeout');
+    }, 210000);
+
     try {
       // 스크랩
       console.log('Scraping:', doc.url);

@@ -8,7 +8,7 @@ provider:
   runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
   region: ap-northeast-2
-  timeout: 600
+  timeout: 240
   memorySize: 2048
   environment:
     NODE_ENV: 'production'
