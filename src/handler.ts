@@ -62,6 +62,8 @@ export const handler = async (event) => {
       throw e;
     }
 
+    console.log('scrape success');
+
     // DB에 상태 저장
     await changeDocStatus(documentId, Status.EMBED_PENDING);
   }

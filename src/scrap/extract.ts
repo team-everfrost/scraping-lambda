@@ -93,6 +93,11 @@ export const extractUrl = async (url: string, doc_id: string) => {
 
   // TODO: 이미지를 갈아치운 HTML 파일을 S3에 업로드합니다?
 
+  // filecheck
+  if (!fs.existsSync(output)) {
+    throw new Error('HTML file not found. scrap failed');
+  }
+
   const { imageMap, updatedHTMLContent: html } = await extractBase64FromHTML(
     output,
     doc_id,

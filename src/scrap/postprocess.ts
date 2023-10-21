@@ -7,16 +7,22 @@ export const postprocess = async (article: ArticleData, docId: string) => {
   // 수정된 article
   const result = article;
 
-  //TODO 썸네일 URL 교체 -> postprocess에서?
-  //썸네일 파일 확장자 추출에 문제 있어 비활성화
+  // 이미지가 없으면 thumbnail 생성 X
+  if (!article.image) return result;
 
-  await thumbnailToS3(article.image, docId);
-  article.image = `https://thumbnail.remak.io/${docId}`;
+  try {
+    await thumbnailToS3(article.image, docId);
+    article.image = `https://thumbnail.remak.io/${docId}`;
+  } catch (e) {
+    console.log('Thumbnail fetch / upload failed:', e);
+  }
 
   return result;
 };
 
 const thumbnailToS3 = async (imageUrl: string, s3Key: string) => {
+  console.log('Try fetch image: ', imageUrl);
+
   const response = await fetchWithRetry(imageUrl);
   const imageBuffer = Buffer.from(response.data, 'binary');
 
