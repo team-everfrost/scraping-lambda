@@ -2,7 +2,7 @@ import {
   Status,
   changeDocStatus,
   client,
-  findDoc,
+  findDocWithRetry,
   updateContent,
 } from './lib/db';
 import { enqueue } from './lib/sqs';
@@ -20,7 +20,7 @@ export const handler = async (event) => {
     console.log('DocumentId:', documentId);
 
     // DB에서 Docid를 통해 가져오기
-    const doc = await findDoc(documentId);
+    const doc = await findDocWithRetry(documentId);
     // 중복 처리 방지
     if (
       doc?.status !== Status.SCRAPE_PENDING &&
@@ -33,31 +33,33 @@ export const handler = async (event) => {
     // 해당 Doc의 상태를 처리중으로 변경
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
 
-    // 실행시간 210초 후 실패처리후 throw
-    setTimeout(async () => {
-      await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
-      throw new Error('Timeout');
-    }, 210000);
-
     try {
+      // 실행시간 210초 후 실패처리후 throw
+      setTimeout(async () => {
+        console.log('Scrape Timeout');
+        await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
+        throw new Error('Timeout');
+      }, 210000);
+
       // 스크랩
       console.log('Scraping:', doc.url);
-      let { article, totalSize } = await extractUrl(doc.url, doc.doc_id);
+      const { article, totalSize } = await extractUrl(doc.url, doc.doc_id);
 
       // 후처리
-      article = await postprocess(article, doc.doc_id);
+      const updatedArticle = await postprocess(article, doc.doc_id);
 
       // DB 저장
       await updateContent(
         documentId,
-        article.title,
-        article.image, // thumbnail_url
-        article.content,
+        updatedArticle.title,
+        updatedArticle.image, // thumbnail_url
+        updatedArticle.content,
         totalSize, // file_size
       );
       // SQS에 임베딩 요청
       await enqueue(documentId);
     } catch (e) {
+      console.log('Scrape Failed');
       await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
       throw e;
     }
