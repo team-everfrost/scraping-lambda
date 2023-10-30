@@ -38,7 +38,7 @@ export const handler = async (event, context) => {
       // lambda timeout 30초 전으로 제한시간 설정
       await promiseTimeout(
         context.getRemainingTimeInMillis() - 30000,
-        job(doc),
+        job(doc, documentId),
       );
     } catch (e) {
       console.error('Scrape Failed. Error:', e);
@@ -56,9 +56,7 @@ export const handler = async (event, context) => {
   await client.end();
 };
 
-const job = async (doc: any) => {
-  const documentId = doc.id;
-
+const job = async (doc: any, documentId: number) => {
   // 스크랩
   console.log('Scraping:', doc.url);
 
