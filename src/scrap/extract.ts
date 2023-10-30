@@ -1,5 +1,6 @@
 import {
   addTransformations,
+  extract,
   extractFromHtml,
   setSanitizeHtmlOptions,
 } from '@extractus/article-extractor';
@@ -8,6 +9,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import * as api from 'single-file-cli';
 import { deleteAllImagesForDocument, uploadAllImages } from '../lib/s3';
+import { promiseTimeout } from '../lib/timeout';
 import { defaultSingleFileArgs, lambdaBrowserArgs } from './args';
 import { loadTransformations } from './loadTransformations';
 
@@ -63,6 +65,14 @@ const getExtensionFromBase64 = async (base64Str: string) => {
   return result?.ext ?? null;
 };
 
+const singleFile = async (args: object, url: string) => {
+  const scrapUrls = [url];
+
+  const singlefile = await api.initialize(args);
+  await singlefile.capture(scrapUrls);
+  await singlefile.finish();
+};
+
 export const extractUrl = async (url: string, doc_id: string) => {
   let browserExecutablePath = '',
     output = 'scrap.html',
@@ -85,11 +95,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
     browserArgs,
   };
 
-  const scrapUrls = [url];
-
-  const singlefile = await api.initialize(args);
-  await singlefile.capture(scrapUrls);
-  await singlefile.finish();
+  await promiseTimeout(3 * 60 * 1000, singleFile(args, url));
 
   // TODO: 이미지를 갈아치운 HTML 파일을 S3에 업로드합니다?
 
@@ -154,4 +160,10 @@ export const extractUrl = async (url: string, doc_id: string) => {
   console.log('Total size:', totalSize);
 
   return { article, totalSize };
+};
+
+export const extractFallback = async (url: string) => {
+  const result = await extract(url);
+
+  return result;
 };

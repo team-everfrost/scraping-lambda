@@ -2,14 +2,15 @@ import {
   Status,
   changeDocStatus,
   client,
-  findDocWithRetry,
+  findDoc,
   updateContent,
 } from './lib/db';
 import { enqueue } from './lib/sqs';
-import { extractUrl } from './scrap/extract';
+import { promiseTimeout } from './lib/timeout';
+import { extractFallback, extractUrl } from './scrap/extract';
 import { postprocess } from './scrap/postprocess';
 
-export const handler = async (event) => {
+export const handler = async (event, context) => {
   await client.connect();
 
   for (const record of event.Records) {
@@ -20,7 +21,7 @@ export const handler = async (event) => {
     console.log('DocumentId:', documentId);
 
     // DB에서 Docid를 통해 가져오기
-    const doc = await findDocWithRetry(documentId);
+    const doc = await findDoc(documentId);
     // 중복 처리 방지
     if (
       doc?.status !== Status.SCRAPE_PENDING &&
@@ -34,32 +35,13 @@ export const handler = async (event) => {
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
 
     try {
-      // 실행시간 210초 후 실패처리후 throw
-      setTimeout(async () => {
-        console.log('Scrape Timeout');
-        await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
-        throw new Error('Timeout');
-      }, 210000);
-
-      // 스크랩
-      console.log('Scraping:', doc.url);
-      const { article, totalSize } = await extractUrl(doc.url, doc.doc_id);
-
-      // 후처리
-      const updatedArticle = await postprocess(article, doc.doc_id);
-
-      // DB 저장
-      await updateContent(
-        documentId,
-        updatedArticle.title,
-        updatedArticle.image, // thumbnail_url
-        updatedArticle.content,
-        totalSize, // file_size
+      // lambda timeout 30초 전으로 제한시간 설정
+      await promiseTimeout(
+        context.getRemainingTimeInMillis() - 30000,
+        job(doc),
       );
-      // SQS에 임베딩 요청
-      await enqueue(documentId);
     } catch (e) {
-      console.log('Scrape Failed');
+      console.error('Scrape Failed. Error:', e);
       await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
       throw e;
     }
@@ -72,4 +54,49 @@ export const handler = async (event) => {
 
   await client.clean();
   await client.end();
+};
+
+const job = async (doc: any) => {
+  const documentId = doc.id;
+
+  // 스크랩
+  console.log('Scraping:', doc.url);
+
+  try {
+    const { article, totalSize } = await extractUrl(doc.url, doc.doc_id);
+
+    // 후처리
+    const updatedArticle = await postprocess(article, doc.doc_id);
+
+    // DB 저장
+    await updateContent(
+      documentId,
+      updatedArticle.title,
+      updatedArticle.image, // thumbnail_url
+      updatedArticle.content,
+      totalSize, // file_size
+    );
+    // SQS에 임베딩 요청
+    await enqueue(documentId);
+  } catch (e) {
+    console.error('single-file Scrap Failed. Error:', e);
+    await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
+
+    console.log('Try extract metadata from url:', doc.url);
+    const article = await extractFallback(doc.url);
+
+    // 후처리
+    const updatedArticle = await postprocess(article, doc.doc_id);
+
+    // DB 저장
+    await updateContent(
+      documentId,
+      updatedArticle.title,
+      updatedArticle.image, // thumbnail_url
+      '',
+      0n, // file_size
+    );
+
+    throw e;
+  }
 };

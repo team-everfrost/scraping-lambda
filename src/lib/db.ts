@@ -15,27 +15,7 @@ export const enum Status {
   EMBED_PENDING = 'EMBED_PENDING',
 }
 
-export const findDocWithRetry = async (documentId: number) => {
-  // 5번의 backoff 재시도 후 실패시 throw
-
-  let sleep = 0;
-
-  for (let i = 0; i < 5; i++) {
-    const doc = await findDoc(documentId);
-    if (doc) return doc;
-
-    // 1초와 기존 sleep * 3 사이의 랜덤한 시간만큼 대기
-    sleep = Math.floor(Math.random() * (sleep * 3 - 1000 + 1)) + 1000;
-
-    console.log('Document not found. Retry after:', sleep, 'ms');
-
-    await new Promise((resolve) => setTimeout(resolve, sleep));
-  }
-
-  throw new Error('Document not found');
-};
-
-const findDoc = async (documentId: number) => {
+export const findDoc = async (documentId: number) => {
   const queryResult = await client.query(
     'SELECT title, type, url, content, status, doc_id, user_id FROM document WHERE id = $1',
     [documentId],
