@@ -15,28 +15,28 @@
     "@aws-sdk/client-sqs": "^3.382.0",
     "@aws-sdk/lib-storage": "^3.417.0",
     "@extractus/article-extractor": "^7.3.1",
-    "axios": "^1.5.0",
+    "axios": "^1.6.0",
     "file-type": "^18.5.0",
     "iconv-lite": "^0.6.3",
     "jschardet": "^3.0.0",
     "serverless-postgres": "^2.1.0",
     "sharp": "^0.32.6",
-    "single-file-cli": "^1.0.68"
+    "single-file-cli": "^1.1.16"
   },
   "devDependencies": {
     "@sparticuz/chromium": "^117.0.0",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
     "@typescript-eslint/parser": "^6.2.0",
     "commitlint-config-git-commit-emoji": "^1.0.0",
-    "eslint": "^8.46.0",
-    "eslint-config-prettier": "^8.9.0",
-    "eslint-plugin-prettier": "^5.0.0",
+    "eslint": "^8.52.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.1",
     "husky": "^8.0.3",
-    "prettier": "^3.0.0",
+    "prettier": "^3.0.3",
     "serverless-dotenv-plugin": "^6.0.0",
-    "serverless-lift": "^1.27.0",
+    "serverless-lift": "^1.28.0",
     "serverless-plugin-typescript": "^2.1.5",
     "serverless-prune-plugin": "^2.0.2",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   }
 }
