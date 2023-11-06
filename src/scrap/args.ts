@@ -21,8 +21,8 @@ export const lambdaBrowserArgs = JSON.stringify([
 ]);
 
 export const defaultSingleFileArgs = {
-  userAgent:
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+  // userAgent:
+  //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
   filenameConflictAction: 'overwrite',
   acceptHeaders: {
     font: 'application/font-woff2;q=1.0,application/font-woff;q=0.9,*/*;q=0.8',
@@ -44,7 +44,7 @@ export const defaultSingleFileArgs = {
   browserDebug: false,
   browserStartMinimized: false,
   browserCookiesFile: '',
-  browserIgnoreInsecureCerts: false,
+  browserIgnoreInsecureCerts: true,
   browserFreezePrototypes: false,
   dumpContent: false,
   filenameTemplate: '{page-title} ({date-iso} {time-locale}).html',

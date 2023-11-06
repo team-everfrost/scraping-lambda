@@ -73,6 +73,42 @@ const singleFile = async (args: object, url: string) => {
   await singlefile.finish();
 };
 
+const scrapeJob = async (args: any, url: string) => {
+  try {
+    // 스크랩 1차 시도 1분
+    await promiseTimeout(60 * 1000, singleFile(args, url));
+    if (!fs.existsSync(args.output)) {
+      console.log('scrape 1st failed. try 2nd');
+      throw new Error('HTML file not found. scrap failed');
+    }
+  } catch (e) {
+    // 스크랩 2차 시도 3분, 동시에 3개 시도해서 1개라도 성공하면 끝
+    // settimeout으로 10초씩 지연 두고 3개 동시에 시도
+    const delayStart = (timeout, taskFunc) => {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          taskFunc().then(resolve).catch(reject);
+        }, timeout);
+      });
+    };
+
+    await Promise.race([
+      promiseTimeout(180 * 1000, singleFile(args, url)),
+      delayStart(10 * 1000, () =>
+        promiseTimeout(170 * 1000, singleFile(args, url)),
+      ),
+      delayStart(20 * 1000, () =>
+        promiseTimeout(160 * 1000, singleFile(args, url)),
+      ),
+    ]);
+
+    if (!fs.existsSync(args.output)) {
+      console.log('scrape 2nd failed.');
+      throw new Error('HTML file not found. scrap failed');
+    }
+  }
+};
+
 export const extractUrl = async (url: string, doc_id: string) => {
   let browserExecutablePath = '',
     output = 'scrap.html',
@@ -95,7 +131,7 @@ export const extractUrl = async (url: string, doc_id: string) => {
     browserArgs,
   };
 
-  await promiseTimeout(3 * 60 * 1000, singleFile(args, url));
+  await scrapeJob(args, url);
 
   // TODO: 이미지를 갈아치운 HTML 파일을 S3에 업로드합니다?
 
