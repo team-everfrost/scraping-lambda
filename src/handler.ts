@@ -35,9 +35,9 @@ export const handler = async (event, context) => {
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
 
     try {
-      // lambda timeout 30초 전으로 제한시간 설정
+      // lambda timeout 10초 전으로 제한시간 설정
       await promiseTimeout(
-        context.getRemainingTimeInMillis() - 30000,
+        context.getRemainingTimeInMillis() - 10000,
         job(doc, documentId),
       );
     } catch (e) {

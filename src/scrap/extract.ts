@@ -75,8 +75,9 @@ const singleFile = async (args: object, url: string) => {
 
 const scrapeJob = async (args: any, url: string) => {
   try {
-    // 스크랩 1차 시도 1분
-    await promiseTimeout(60 * 1000, singleFile(args, url));
+    // 스크랩 1차 시도 1분 30초
+    console.log('scrape 1st try start');
+    await promiseTimeout(90 * 1000, singleFile(args, url));
     if (!fs.existsSync(args.output)) {
       console.log('scrape 1st failed. try 2nd');
       throw new Error('HTML file not found. scrap failed');
@@ -91,7 +92,7 @@ const scrapeJob = async (args: any, url: string) => {
         }, timeout);
       });
     };
-
+    console.log('scrape 2nd try start');
     await Promise.race([
       promiseTimeout(180 * 1000, singleFile(args, url)),
       delayStart(10 * 1000, () =>
