@@ -1,3 +1,4 @@
+import { exec } from 'child_process';
 import {
   Status,
   changeDocStatus,
@@ -33,6 +34,9 @@ export const handler = async (event, context) => {
 
     // 해당 Doc의 상태를 처리중으로 변경
     await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
+
+    // 이전 puppeteer 크로미움 프로파일 삭제
+    cleanTmpDirectory();
 
     try {
       // lambda timeout 10초 전으로 제한시간 설정
@@ -97,4 +101,19 @@ const job = async (doc: any, documentId: number) => {
 
     throw e;
   }
+};
+
+const cleanTmpDirectory = () => {
+  const command = 'find /tmp -name "puppeteer_dev*" -type d | xargs rm -rf';
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`cleanTmp exec error: ${error}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`cleanTmp stderr: ${stderr}`);
+      return;
+    }
+    console.log(`cleanTmp stdout: ${stdout}`);
+  });
 };
