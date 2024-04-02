@@ -2,7 +2,7 @@ import ServerlessClient from 'serverless-postgres';
 
 export const client = new ServerlessClient({
   connectionString: process.env.DB_URL,
-  ssl: true,
+  ssl: false,
   application_name: 'scraping-lambda',
   // debug: true,
   delayMs: 3000,
