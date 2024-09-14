@@ -7,7 +7,7 @@
     "dev": "serverless invoke local -f remak-scraping -p test/testEvent/textDirect.json",
     "prepare": "husky install",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package && npm explore single-file-cli -- npm install"
   },
   "author": "",
   "license": "ISC",
