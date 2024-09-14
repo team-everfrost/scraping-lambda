@@ -20,7 +20,6 @@
     "file-type": "^18.5.0",
     "iconv-lite": "^0.6.3",
     "jschardet": "^3.0.0",
-    "patch-package": "^8.0.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "serverless-postgres": "^2.1.0",
@@ -28,8 +27,7 @@
     "single-file-cli": "^1.1.54"
   },
   "devDependencies": {
-    "@sparticuz/chromium": "123.0.1",
-    "puppeteer-core": "22.7.1",
+    "@sparticuz/chromium": "127.0.0",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
     "@typescript-eslint/parser": "^6.2.0",
     "commitlint-config-git-commit-emoji": "^1.0.0",
@@ -37,6 +35,8 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
     "husky": "^8.0.3",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.0.3",
     "serverless-dotenv-plugin": "^6.0.0",
     "serverless-lift": "^1.28.0",
