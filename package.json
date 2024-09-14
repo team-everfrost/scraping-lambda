@@ -28,7 +28,8 @@
     "single-file-cli": "^1.1.54"
   },
   "devDependencies": {
-    "@sparticuz/chromium": "^126.0.0",
+    "@sparticuz/chromium": "123.0.1",
+    "puppeteer-core": "22.7.1",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
     "@typescript-eslint/parser": "^6.2.0",
     "commitlint-config-git-commit-emoji": "^1.0.0",
