@@ -17,6 +17,10 @@ interface ImageMap {
   [key: string]: string;
 }
 
+// https://github.com/Sparticuz/chromium/issues/271
+chromium.setGraphicsMode = true;
+console.log(chromium);
+
 export const extractBase64FromHTML = async (
   htmlFilePath: string,
   doc_id: string,
