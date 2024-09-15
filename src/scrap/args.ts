@@ -18,6 +18,7 @@ export const lambdaBrowserArgs = JSON.stringify([
   '--disable-web-security',
   '--no-sandbox',
   '--no-zygote',
+  '--headless=new',
 ]);
 
 export const defaultSingleFileArgs = {
