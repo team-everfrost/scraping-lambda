@@ -1,0 +1,25 @@
+diff --git a/node_modules/single-file-cli/back-ends/puppeteer.js b/node_modules/single-file-cli/back-ends/puppeteer.js
+index b8e6b33..2681ea4 100644
+--- a/node_modules/single-file-cli/back-ends/puppeteer.js
++++ b/node_modules/single-file-cli/back-ends/puppeteer.js
+@@ -23,7 +23,8 @@
+ 
+ /* global singlefile, require, exports */
+ 
+-const puppeteer = require("puppeteer-core");
++// const puppeteer = require("puppeteer-core");
++const puppeteer = require("puppeteer-extra");
+ const scripts = require("./common/scripts.js");
+ 
+ const EXECUTION_CONTEXT_DESTROYED_ERROR = "Execution context was destroyed";
+@@ -36,6 +37,10 @@ exports.initialize = async options => {
+ 	if (options.browserServer) {
+ 		browser = await puppeteer.connect({ browserWSEndpoint: options.browserServer });
+ 	} else {
++		// stealth 플러그인 패치 시작 - qilip
++		const StealthPlugin = require('puppeteer-extra-plugin-stealth');
++		puppeteer.use(StealthPlugin());
++		// stealth 플러그인 패치 끝 - qilip
+ 		browser = await puppeteer.launch(getBrowserOptions(options));
+ 	}
+ 	return browser;
