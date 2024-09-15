@@ -5,7 +5,7 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
   region: ap-northeast-2
   timeout: 300
@@ -27,7 +27,7 @@ provider:
       Resource: "*"
   logRetentionInDays: 14
   layers:
-    - arn:aws:lambda:ap-northeast-2:518272060765:layer:chromium:6
+    - arn:aws:lambda:ap-northeast-2:518272060765:layer:chromium:4
 
 functions:
   remak-scraping:
