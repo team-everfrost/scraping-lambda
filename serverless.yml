@@ -27,7 +27,7 @@ provider:
       Resource: "*"
   logRetentionInDays: 14
   layers:
-    - arn:aws:lambda:ap-northeast-2:518272060765:layer:chromium:9
+    - arn:aws:lambda:ap-northeast-2:518272060765:layer:chromium:6
 
 functions:
   remak-scraping:
