@@ -70,26 +70,11 @@ const getExtensionFromBase64 = async (base64Str: string) => {
 };
 
 const singleFile = async (args: object, url: string) => {
-  console.log('singleFile started', { url });
   const scrapUrls = [url];
-  console.log('scrapUrls:', scrapUrls);
 
-  try {
-    console.log('Initializing api');
-    const singlefile = await api.initialize(args);
-    console.log('API initialized successfully');
-
-    console.log('Starting capture');
-    await singlefile.capture(scrapUrls);
-    console.log('Capture completed');
-
-    console.log('Finishing singlefile');
-    await singlefile.finish();
-    console.log('singleFile finished successfully');
-  } catch (error) {
-    console.error('Error in singleFile:', error);
-    throw error; // 에러를 상위로 전파
-  }
+  const singlefile = await api.initialize(args);
+  await singlefile.capture(scrapUrls);
+  await singlefile.finish();
 };
 
 const scrapeJob = async (args: any, url: string) => {
@@ -112,10 +97,6 @@ export const extractUrl = async (url: string, doc_id: string) => {
     browserExecutablePath = await chromium.executablePath();
     output = `/tmp/${doc_id}-scrap.html`;
     browserArgs = lambdaBrowserArgs;
-
-    console.log('browserExecutablePath:', browserExecutablePath);
-    console.log('output:', output);
-    console.log('browserArgs:', browserArgs);
   }
 
   const args = {
