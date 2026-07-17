@@ -5,6 +5,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
+import { getImageS3Key } from './domain';
 
 // AWS 설정
 const s3Client = new S3Client({
@@ -43,11 +44,10 @@ export const uploadAllImages = async (imageMap: Record<string, string>) => {
   const uploadPromises = [];
 
   for (const url in imageMap) {
-    // image.remak.io 뒷부분을 한번에 추출
-    const matches = url.match(/https:\/\/image.remak.io\/(.*)/);
+    // 신규/구 이미지 도메인 모두에서 S3 key를 추출합니다.
+    const s3Key = getImageS3Key(url);
 
-    if (matches && matches.length > 1) {
-      const s3Key = matches[1];
+    if (s3Key) {
       uploadPromises.push(uploadToS3(imageMap[url], s3Key));
     } else {
       console.error(`Invalid URL format: ${url}`);

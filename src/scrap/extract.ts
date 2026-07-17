@@ -8,6 +8,7 @@ import chromium from '@sparticuz/chromium';
 import crypto from 'crypto';
 import fs from 'fs';
 import * as api from 'single-file-cli';
+import { IMAGE_BASE_URL, REMAK_IMAGE_URL_PATTERN } from '../lib/domain';
 import { deleteAllImagesForDocument, uploadAllImages } from '../lib/s3';
 import { promiseTimeout } from '../lib/timeout';
 import { defaultSingleFileArgs, lambdaBrowserArgs } from './args';
@@ -52,7 +53,7 @@ export const extractBase64FromHTML = async (
 const generateUrl = (doc_id: string): string => {
   // 임의의 UUID값을 생성하여 URL을 생성합니다.
   const uuid = crypto.randomUUID();
-  return `https://image.remak.io/${doc_id}/${uuid}`;
+  return `${IMAGE_BASE_URL}/${doc_id}/${uuid}`;
 };
 
 const getExtensionFromBase64 = async (base64Str: string) => {
@@ -131,10 +132,8 @@ export const extractUrl = async (url: string, doc_id: string) => {
     contentLengthThreshold: 0,
   });
 
-  // 본문에 있는 remak URL만 추출. 예: https://image.remak.io/xxxx/xxxx.xxx (확장자 없을 수도 있음)
-  const urlPattern =
-    /https:\/\/image\.remak\.io\/[\w-]+\/[\w-]+(\.[a-zA-Z0-9]+)?/g;
-  const remakUrls = article.content.match(urlPattern);
+  // 본문에 있는 신규/구 remak 이미지 URL만 추출합니다.
+  const remakUrls = article.content.match(REMAK_IMAGE_URL_PATTERN);
 
   // 추출된 URL만 포함된 ImageMap을 생성합니다.
   const filteredImageMap: ImageMap = remakUrls

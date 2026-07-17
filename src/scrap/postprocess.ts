@@ -1,6 +1,7 @@
 import { ArticleData } from '@extractus/article-extractor';
 import sharp from 'sharp';
 import { fetchWithRetry } from '../lib/axios';
+import { THUMBNAIL_BASE_URL } from '../lib/domain';
 import { uploadThumbnailToS3 } from '../lib/s3';
 
 export const postprocess = async (article: ArticleData, docId: string) => {
@@ -12,7 +13,7 @@ export const postprocess = async (article: ArticleData, docId: string) => {
 
   try {
     await thumbnailToS3(article.image, docId);
-    article.image = `https://thumbnail.remak.io/${docId}`;
+    article.image = `${THUMBNAIL_BASE_URL}/${docId}`;
   } catch (e) {
     console.log('Thumbnail fetch / upload failed:', e);
   }
