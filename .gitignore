@@ -1,6 +1,7 @@
 node_modules
 .serverless
 .build
+.artifacts
 .env
 .DS_Store
 scrap.html

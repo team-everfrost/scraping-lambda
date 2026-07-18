@@ -1,25 +1,21 @@
 {
   "compilerOptions": {
-    "preserveConstEnums": true,
-    // "strictNullChecks": true,
-    "sourceMap": true,
-    "allowJs": true,
-    "target": "ES2020",
-    "outDir": ".build",
+    "target": "ES2023",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "rootDir": "./",
-    "lib": ["ES2020"],
-    "typeRoots": [
-      "node_modules/@types",
-      "./types"
-    ],
+    "lib": ["ES2023", "DOM"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": ".build",
+    "types": ["node", "aws-lambda"]
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    ".build"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", ".build", ".serverless"]
 }

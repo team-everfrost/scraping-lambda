@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Remak browser-only scraping Lambda
+
+Parameters:
+  CodeBucket:
+    Type: String
+  CodeKey:
+    Type: String
+  ArtifactBucketName:
+    Type: String
+  ScrapeRequestQueueArn:
+    Type: String
+  ScrapeResultQueueArn:
+    Type: String
+  ScrapeResultQueueUrl:
+    Type: String
+  ReservedConcurrency:
+    Type: Number
+    Default: 2
+  MaxScrapeAttempts:
+    Type: Number
+    Default: 3
+
+Resources:
+  ScraperLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/remak-scraping
+      RetentionInDays: 14
+
+  ScraperRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: remak-scraper-minimal-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub '${ScraperLogGroup.Arn}:*'
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${ArtifactBucketName}/scrapes/*'
+              - Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !Ref ScrapeResultQueueArn
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !Ref ScrapeRequestQueueArn
+
+  ScraperFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: ScraperLogGroup
+    Properties:
+      FunctionName: remak-scraping
+      Runtime: nodejs24.x
+      Architectures: [x86_64]
+      Handler: index.handler
+      Role: !GetAtt ScraperRole.Arn
+      Timeout: 180
+      MemorySize: 2048
+      EphemeralStorage:
+        Size: 1024
+      ReservedConcurrentExecutions: !Ref ReservedConcurrency
+      Code:
+        S3Bucket: !Ref CodeBucket
+        S3Key: !Ref CodeKey
+      Environment:
+        Variables:
+          ARTIFACT_BUCKET: !Ref ArtifactBucketName
+          SCRAPE_RESULT_QUEUE_URL: !Ref ScrapeResultQueueUrl
+          MAX_SCRAPE_ATTEMPTS: !Ref MaxScrapeAttempts
+
+  ScrapeEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !Ref ScrapeRequestQueueArn
+      FunctionName: !Ref ScraperFunction
+      Enabled: true
+      BatchSize: 1
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+
+Outputs:
+  FunctionArn:
+    Value: !GetAtt ScraperFunction.Arn

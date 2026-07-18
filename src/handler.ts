@@ -1,119 +1,178 @@
-import { exec } from 'child_process';
+import type {
+  Context,
+  SQSBatchResponse,
+  SQSEvent,
+  SQSRecord,
+} from 'aws-lambda';
+import { AWSGateway } from './aws.js';
+import { loadConfig, type Config } from './config.js';
 import {
-  Status,
-  changeDocStatus,
-  client,
-  findDoc,
-  updateContent,
-} from './lib/db';
-import { enqueue } from './lib/sqs';
-import { promiseTimeout } from './lib/timeout';
-import { extractFallback, extractUrl } from './scrap/extract';
-import { postprocess } from './scrap/postprocess';
+  parseRequest,
+  schemaVersion,
+  scrapeCompleted,
+  scrapeFailed,
+  type Envelope,
+  type ScrapeRequestData,
+  type ScrapeResultData,
+} from './contracts.js';
+import { captureURL, type Capture } from './scrape.js';
 
-export const handler = async (event, context) => {
-  await client.connect();
+export interface Dependencies {
+  config: Config;
+  capture: (url: string, timeoutMilliseconds: number) => Promise<Capture>;
+  store: (
+    request: Envelope<ScrapeRequestData>,
+    capture: Capture,
+  ) => Promise<{
+    rawArtifactKey: string;
+    contentArtifactKey: string;
+    fileSize: number;
+  }>;
+  publish: (event: Envelope<ScrapeResultData>) => Promise<void>;
+}
 
-  for (const record of event.Records) {
-    const messageBody =
-      typeof record.body === 'string' ? JSON.parse(record.body) : record.body;
-    const documentId = messageBody.documentId;
-
-    console.log('DocumentId:', documentId);
-
-    // DB에서 Docid를 통해 가져오기
-    const doc = await findDoc(documentId);
-    // 중복 처리 방지
-    if (
-      doc?.status !== Status.SCRAPE_PENDING &&
-      doc?.status !== Status.SCRAPE_REJECTED
-    )
-      continue;
-
-    console.log('Before Status:', doc?.status);
-
-    // 해당 Doc의 상태를 처리중으로 변경
-    await changeDocStatus(documentId, Status.SCRAPE_PROCESSING);
-
-    // 이전 puppeteer 크로미움 프로파일 삭제
-    cleanTmpDirectory();
-
-    try {
-      // lambda timeout 10초 전으로 제한시간 설정
-      await promiseTimeout(
-        context.getRemainingTimeInMillis() - 10000,
-        job(doc, documentId),
-      );
-    } catch (e) {
-      console.error('Scrape Failed. Error:', e);
-      await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
-      throw e;
+export function createHandler(dependencies: Dependencies) {
+  return async (
+    event: SQSEvent,
+    context: Context,
+  ): Promise<SQSBatchResponse> => {
+    const batchItemFailures: { itemIdentifier: string }[] = [];
+    for (const record of event.Records) {
+      try {
+        await processRecord(record, context, dependencies);
+      } catch (error) {
+        console.error(
+          JSON.stringify({
+            level: 'error',
+            message: 'scrape record failed',
+            messageId: record.messageId,
+            error: errorMessage(error),
+          }),
+        );
+        batchItemFailures.push({ itemIdentifier: record.messageId });
+      }
     }
+    return { batchItemFailures };
+  };
+}
 
-    console.log('scrape success');
-
-    // DB에 상태 저장
-    await changeDocStatus(documentId, Status.EMBED_PENDING);
-  }
-
-  await client.clean();
-  await client.end();
-};
-
-const job = async (doc: any, documentId: number) => {
-  // 스크랩
-  console.log('Scraping:', doc.url);
-
+async function processRecord(
+  record: SQSRecord,
+  context: Context,
+  dependencies: Dependencies,
+): Promise<void> {
+  const request = parseRequest(record.body);
+  const receiveCount = Number.parseInt(
+    record.attributes.ApproximateReceiveCount ?? '1',
+    10,
+  );
+  const timeout = Math.max(
+    1_000,
+    Math.min(150_000, context.getRemainingTimeInMillis() - 15_000),
+  );
   try {
-    const { article, totalSize } = await extractUrl(doc.url, doc.doc_id);
-
-    // 후처리
-    const updatedArticle = await postprocess(article, doc.doc_id);
-
-    // DB 저장
-    await updateContent(
-      documentId,
-      updatedArticle.title,
-      updatedArticle.image, // thumbnail_url
-      updatedArticle.content,
-      totalSize, // file_size
+    const capture = await dependencies.capture(request.data.url, timeout);
+    const artifacts = await dependencies.store(request, capture);
+    await dependencies.publish(
+      resultEvent(request, scrapeCompleted, {
+        jobId: request.data.jobId,
+        documentId: request.data.documentId,
+        documentVersion: request.data.documentVersion,
+        title: capture.title,
+        rawArtifactKey: artifacts.rawArtifactKey,
+        contentArtifactKey: artifacts.contentArtifactKey,
+        contentHash: capture.contentHash,
+        extractionMethod: capture.extractionMethod,
+        fileSize: artifacts.fileSize,
+      }),
     );
-    // SQS에 임베딩 요청
-    await enqueue(documentId);
-  } catch (e) {
-    console.error('single-file Scrap Failed. Error:', e);
-    await changeDocStatus(documentId, Status.SCRAPE_REJECTED);
-
-    console.log('Try extract metadata from url:', doc.url);
-    const article = await extractFallback(doc.url);
-
-    // 후처리
-    const updatedArticle = await postprocess(article, doc.doc_id);
-
-    // DB 저장
-    await updateContent(
-      documentId,
-      updatedArticle.title,
-      updatedArticle.image, // thumbnail_url
-      '',
-      0n, // file_size
+    console.info(
+      JSON.stringify({
+        level: 'info',
+        message: 'scrape completed',
+        jobId: request.data.jobId,
+        documentId: request.data.documentId,
+        version: request.data.documentVersion,
+      }),
     );
-
-    throw e;
+  } catch (error) {
+    if (receiveCount < dependencies.config.maxAttempts) throw error;
+    await dependencies.publish(
+      resultEvent(request, scrapeFailed, {
+        jobId: request.data.jobId,
+        documentId: request.data.documentId,
+        documentVersion: request.data.documentVersion,
+        title: '',
+        rawArtifactKey: '',
+        contentArtifactKey: '',
+        contentHash: '',
+        extractionMethod: '',
+        fileSize: 0,
+        errorCode: classifyError(error),
+        errorMessage: errorMessage(error).slice(0, 500),
+      }),
+    );
+    console.warn(
+      JSON.stringify({
+        level: 'warn',
+        message: 'scrape permanently failed',
+        jobId: request.data.jobId,
+        documentId: request.data.documentId,
+        version: request.data.documentVersion,
+        receiveCount,
+      }),
+    );
   }
-};
+}
 
-const cleanTmpDirectory = () => {
-  const command = 'find /tmp -name "puppeteer_dev*" -type d | xargs rm -rf';
-  exec(command, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`cleanTmp exec error: ${error}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`cleanTmp stderr: ${stderr}`);
-      return;
-    }
-    console.log(`cleanTmp stdout: ${stdout}`);
-  });
+function resultEvent(
+  request: Envelope<ScrapeRequestData>,
+  eventType: typeof scrapeCompleted | typeof scrapeFailed,
+  data: ScrapeResultData,
+): Envelope<ScrapeResultData> {
+  return {
+    schemaVersion,
+    eventId: request.eventId,
+    eventType,
+    traceId: request.traceId,
+    occurredAt: new Date().toISOString(),
+    data,
+  };
+}
+
+function classifyError(error: unknown): string {
+  const message = errorMessage(error).toLowerCase();
+  if (
+    message.includes('private') ||
+    message.includes('reserved') ||
+    message.includes('credential-free')
+  )
+    return 'url_blocked';
+  if (message.includes('timeout') || message.includes('timed out'))
+    return 'navigation_timeout';
+  if (message.includes('content')) return 'extraction_failed';
+  return 'scrape_failed';
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+let defaultHandler: ReturnType<typeof createHandler> | undefined;
+
+export const handler = async (
+  event: SQSEvent,
+  context: Context,
+): Promise<SQSBatchResponse> => {
+  if (!defaultHandler) {
+    const config = loadConfig();
+    const gateway = new AWSGateway(config);
+    defaultHandler = createHandler({
+      config,
+      capture: captureURL,
+      store: gateway.store.bind(gateway),
+      publish: gateway.publish.bind(gateway),
+    });
+  }
+  return defaultHandler(event, context);
 };
