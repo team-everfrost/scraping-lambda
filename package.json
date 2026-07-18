@@ -23,10 +23,10 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.152",
-    "@types/node": "^24.3.0",
-    "esbuild": "^0.25.9",
+    "@types/node": "^26.1.1",
+    "esbuild": "^0.28.1",
     "prettier": "^3.6.2",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^7.0.2"
   }
 }
